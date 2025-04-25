@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto AI Chatbot with Arbitrage</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #chatbox { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
+    #chatbox div { margin: 5px 0; }
+    .user { color: blue; }
+    .bot { color: green; }
+    .info { color: orange; }
+    .price { color: black; font-weight: bold; }
+    .profit { color: green; font-weight: bold; }
+    #input-area { margin-top: 10px; display: flex; }
+    #input-area input { flex: 1; padding: 10px; font-size: 16px; }
+    #input-area button { padding: 10px; font-size: 16px; margin-left: 5px; }
+    #wallet { margin-top: 20px; font-size: 18px; }
+    #wallet p { font-size: 18px; }
+    #arbitrage-opportunity { margin-top: 20px; font-size: 16px; }
+    #arbitrage-opportunity p { font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Crypto AI Chatbot with Arbitrage</h1>
+
+  <div id="wallet">
+    <p>Your Wallet Balance: <span id="wallet-balance">1000.00</span> USD</p>
+  </div>
+
+  <div id="arbitrage-opportunity">
+    <p id="crypto-symbol"></p>
+    <p id="crypto-com-price"></p>
+    <p id="coinbase-price"></p>
+    <div id="opportunity-details">
+      <p id="buy-on"></p>
+      <p id="buy-price"></p>
+      <p id="sell-on"></p>
+      <p id="sell-price"></p>
+      <p id="potential-profit"></p>
+    </div>
+  </div>
+
+  <div id="chatbox"></div>
+
+  <div id="trade-amount">
+    <h3>Enter Trade Amount (USD)</h3>
+    <input type="number" id="trade-amount-input" placeholder="Amount to invest" />
+  </div>
+
+  <!-- Dropdown for Aggression Level -->
+  <div id="aggression-level">
+    <h3>Select Aggression Level</h3>
+    <select id="aggression-select">
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+  </div>
+
+  <div id="input-area">
+    <input type="text" id="user-input" placeholder="Ask me about crypto!">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="checkArbitrage()">Check Arbitrage</button>
+    <button id="execute-trade-btn" onclick="executeArbitrageTrade()" disabled>Execute Trade</button>
+    <button id="get-feedback-btn" onclick="getTradeFeedback()" disabled>Get Feedback</button>
+  </div>
+
+  <script>
+    // Append user and bot messages to chatbox
+    function appendMessage(message, sender) {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = sender;
+      messageDiv.innerHTML = message;
+      document.getElementById("chatbox").appendChild(messageDiv);
+    }
+
+    // Send user input to the backend and get a response
+    async function sendMessage() {
+      const query = document.getElementById("user-input").value.trim();
+      if (!query) return;
+
+      appendMessage(query, "user");
+      document.getElementById("user-input").value = "";
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query })
+        });
+        const data = await response.json();
+        appendMessage(data.response, "bot");
+      } catch (error) {
+        appendMessage("Error: Could not connect to the server.", "bot");
+      }
+    }
+
+    // Check arbitrage opportunities
+    async function checkArbitrage() {
+      const crypto = document.getElementById("user-input").value.trim().toLowerCase();
+      if (!crypto) {
+        appendMessage("Please enter a cryptocurrency to check arbitrage.", "info");
+        return;
+      }
+
+      appendMessage(`Checking arbitrage opportunities for ${crypto}...`, "info");
+
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/arbitrage?crypto=${crypto}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" }
+        });
+        const data = await response.json();
+
+        if (data.response === "Arbitrage opportunities found!") {
+          const opportunity = data.arbitrage_opportunity;
+
+          // Enable the Execute Trade button
+          document.getElementById("execute-trade-btn").disabled = false;
+
+          // Display arbitrage opportunity in the chatbox
+          appendMessage(`Arbitrage Opportunity for ${data.crypto_symbol}`, "info");
+          appendMessage(`Price on Crypto.com: <span class="price">${data.crypto_com_price} USD</span>`, "info");
+          appendMessage(`Price on Coinbase: <span class="price">${data.coinbase_price} USD</span>`, "info");
+          appendMessage(`Buy on: ${opportunity.buy_on}`, "info");
+          appendMessage(`At price: <span class="price">${opportunity.buy_price} USD</span>`, "info");
+          appendMessage(`Sell on: ${opportunity.sell_on}`, "info");
+          appendMessage(`At price: <span class="price">${opportunity.sell_price} USD</span>`, "info");
+          appendMessage(`Price Difference: <span class="profit">${opportunity.potential_profit} USD</span>`, "info");
+        } else {
+          appendMessage(data.response, "info");
+        }
+      } catch (error) {
+        appendMessage("Error: Could not fetch arbitrage data.", "info");
+        console.error("Arbitrage API Error:", error);
+      }
+    }
+
+    // New function to get aggression value from dropdown
+    function getAggressionValue() {
+      const aggressionSelect = document.getElementById("aggression-select");
+      const selectedAggression = aggressionSelect.value;
+
+      switch (selectedAggression) {
+        case "low":
+          return 0.1; // Low aggression
+        case "medium":
+          return 0.2; // Medium aggression
+        case "high":
+          return 0.3; // High aggression
+        default:
+          return 0.1; // Default to low aggression
+      }
+    }
+
+
+    // Execute arbitrage trade
+    async function executeArbitrageTrade() {
+      const tradeAmountElement = document.getElementById("trade-amount-input");
+      const tradeAmount = parseFloat(tradeAmountElement.value.trim());
+
+      if (isNaN(tradeAmount) || tradeAmount <= 0) {
+        alert("Please enter a valid trade amount.");
+        return;
+      }
+
+      // Fetch arbitrage opportunity data
+      const cryptoPrices = await getArbitrageOpportunityData();
+
+      if (cryptoPrices) {
+        const { buyPrice, sellPrice, exchangeBuy, exchangeSell, potentialProfit } = cryptoPrices;
+
+        // Get aggression value from dropdown
+        const aggression = getAggressionValue();
+
+        const fees = calculateFees(tradeAmount);
+
+        // Simulate the mock trade
+        const tradeResult = await executeMockTrade({
+          tradeAmount,
+          buyPrice,
+          sellPrice,
+          aggression
+        });
+
+        if (tradeResult.status === "success") {
+          const netProfit = tradeResult.profit - fees;
+          alert(`Mock trade successful! Net profit after fees: $${netProfit}`);
+
+          // Update wallet balance
+          const newWalletBalance = parseFloat(document.getElementById("wallet-balance").textContent) + netProfit;
+          document.getElementById("wallet-balance").textContent = newWalletBalance.toFixed(2);
+
+          // Enable Get Feedback button after trade execution
+          document.getElementById("get-feedback-btn").disabled = false;
+        } else {
+          alert(`Mock trade failed: ${tradeResult.message}`);
+        }
+      } else {
+        alert("No arbitrage opportunity found.");
+      }
+    }
+
+    // Get arbitrage opportunity data
+    async function getArbitrageOpportunityData() {
+      const crypto = document.getElementById("user-input").value.trim().toLowerCase();
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/arbitrage?crypto=${crypto}`);
+        const data = await response.json();
+
+        if (data.response === "Arbitrage opportunities found!") {
+          return {
+            buyPrice: parseFloat(data.arbitrage_opportunity.buy_price),
+            sellPrice: parseFloat(data.arbitrage_opportunity.sell_price),
+            exchangeBuy: data.arbitrage_opportunity.buy_on,
+            exchangeSell: data.arbitrage_opportunity.sell_on,
+            potentialProfit: parseFloat(data.arbitrage_opportunity.potential_profit)
+          };
+        } else {
+          return null;
+        }
+      } catch (error) {
+        console.error("Error fetching arbitrage opportunity data:", error);
+        return null;
+      }
+    }
+
+    // Simulate the trade execution based on aggression
+    function executeMockTrade({ tradeAmount, buyPrice, sellPrice, aggression }) {
+      const priceDifference = sellPrice - buyPrice;
+      const profit = (tradeAmount / buyPrice) * priceDifference * aggression;
+
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            status: "success",
+            profit
+          });
+        }, 1000); // Simulate some delay for the mock trade
+      });
+    }
+
+    // Get trade feedback from OpenAI
+    async function getTradeFeedback() {
+      const tradeAmountElement = document.getElementById("trade-amount-input");
+      const tradeAmount = parseFloat(tradeAmountElement.value.trim());
+
+      if (isNaN(tradeAmount) || tradeAmount <= 0) {
+        alert("Please enter a valid trade amount.");
+        return;
+      }
+
+      // Fetch arbitrage opportunity data
+      const cryptoPrices = await getArbitrageOpportunityData();
+
+      if (cryptoPrices) {
+        const { buyPrice, sellPrice, exchangeBuy, exchangeSell, potentialProfit } = cryptoPrices;
+
+        const aggression = getAggressionValue();
+
+        const feedbackRequest = {
+          tradeAmount,
+          buyPrice,
+          sellPrice,
+          exchangeBuy,
+          exchangeSell,
+          potentialProfit,
+          aggression
+        };
+
+        try {
+          const response = await fetch('http://127.0.0.1:5000/get_trade_feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(feedbackRequest)
+          });
+
+          const data = await response.json();
+          if (data && data.feedback) {
+            appendMessage(`AI Feedback: ${data.feedback}`, "info");
+          } else {
+            appendMessage("Error: Could not get feedback.", "info");
+          }
+        } catch (error) {
+          console.error("Error fetching feedback from OpenAI:", error);
+          appendMessage("Error: Could not get feedback.", "info");
+        }
+      } else {
+        alert("No arbitrage opportunity found.");
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #0a0a12;
+  overflow: hidden;
+}
+
+.app-container {
+  height: 100%;
+  position: relative;
+}
+
+
+.App {
+  text-align: center;
+}
+
+.sentiment-analysis {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.simulate-mode-toggle {
+  color: #fff;
+  background-color: rgba(0, 200, 255, 0.1);
+  border: 1px solid rgba(0, 200, 255, 0.5);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  display: inline-block;
+}
+
+.simulate-mode-toggle input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.2);
+}
+
+.sentiment-analysis h2 {
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.sentiment-analysis ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sentiment-analysis li {
+  margin-bottom: 10px;
+}
+
+.sentiment-analysis h3 {
+  font-size: 1.25rem;
+  margin-top: 20px;
+}
+
+.sentiment-analysis h4 {
+  font-size: 1.1rem;
+  margin-top: 10px;
+}
+
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-container {
+  padding-top: 80px; /* space for fixed top navbar */
+}

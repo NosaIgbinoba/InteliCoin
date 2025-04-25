@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Transactions</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    button { padding: 10px 15px; margin: 20px 0; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>All Transactions</h1>
+
+  <!-- Button to go back to the previous page -->
+  <button onclick="window.location.href='/'">Back to Dashboard</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody id="transaction-table-body">
+      <!-- Transaction rows will be dynamically populated here -->
+    </tbody>
+  </table>
+
+  <script>
+    // Fetch transactions from the server
+    async function fetchTransactions() {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/transactions");
+        if (!response.ok) {
+          throw new Error("Failed to fetch transactions");
+        }
+        const data = await response.json();
+
+        const tableBody = document.getElementById("transaction-table-body");
+        tableBody.innerHTML = ""; // Clear existing rows
+
+        // Reverse the order of transactions to show most recent on top
+        data.reverse().forEach(transaction => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${transaction.time}</td>
+            <td>${transaction.type}</td>
+            <td>$${parseFloat(transaction.amount).toFixed(2)}</td>
+            <td>${transaction.description}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
+    }
+
+    // Load transactions on page load
+    fetchTransactions();
+  </script>
+</body>
+</html>
